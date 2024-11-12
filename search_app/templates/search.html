@@ -1,0 +1,178 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ホームページ</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+        <!-- カスタム CSS -->
+        <link rel="stylesheet" type="text/css" href={% static 'style.css' %}>
+    </head>
+    <body style="">
+        <header class="maincolor" style="">
+            <div class="position-relative">
+                {% if request.user.is_authenticated %}
+                <ul class="position-absolute" style="right:0;">
+                    <li>ユーザー：{{ user.username }}</li>
+                        <li><a type="button" class="text-danger linknone fw-bold" data-bs-toggle="modal" data-bs-target="#logoutModal" style="cursor: pointer; right:0;">ログアウト</a></li>
+                </ul>
+                {% else %}
+                <ul class="position-absolute" style="right:0;">
+                    <li><a href={% url 'accounts:signup' %} class="linknone">サインイン</a></li>
+                    <li><a href={% url 'accounts:login' %} class="linknone">ログイン</a></li>
+                </ul>
+                {% endif %}
+            </div>                
+            <h3 style="text-align:center;">検索アプリ</h3>
+        </header>
+        <main><!--検索フォーム-->
+            <form method="get" class="borderli rounded" style="margin:50px 30px; padding:30px 30px 20px;">
+                <div style="text-align: center;">{{ form.as_p }}</div>
+                <div class="d-flex mt-3" style="justify-content: space-around;">
+                    <div style="width:45%;">
+                        <label for="category">カテゴリ：</label>
+                        <select class="borderli rounded" name="category" style="width:100%; height:30px;">
+                            <option value="" selected>すべて</option>
+                            <option value="書籍">書籍</option>
+                            <option value="電子機器">電子機器</option>
+                        </select>
+                    </div>
+                    <div style="width:45%;">
+                        <label for="sort">並び替え：</label>
+                        <select class="borderli rounded" name="sort" style="width:100%; height:30px;">
+                            <option value="name">名前順</option>
+                            <option value="price_asc">価格が安い順</option>
+                            <option value="price_desc">価格が高い順</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex mt-3" style="justify-content: space-around;">
+                    <!--minをデータの最低額・maxを最高額にして二点を選べるようにする
+                    <input type="range" class="form-range" min="0" max="" id="customRange2">-->
+
+                    <div style="width:45%;">
+                        <label for="min_price">最低価格：</label>
+                        <input class="borderli rounded" style="width:100%;" type="number" name="min_price" min="0">
+                    </div>
+                    <div style="width:45%;">
+                        <label for="max_price">最高価格：</label>
+                        <input class="borderli rounded" style="width:100%;" type="number" name="max_price" min="0">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn borderli maincolor btny" style="margin:35px 0 10px; width:100%; border-radius:25px;">検索</button>
+            </form>
+
+        <!--検索ワードの表示　例："Django"の検索結果-->
+
+        <p>お気に入りテスト: {{ favorite_products }}</p>
+
+        <ul style="padding-left: 0px; margin:20px;">
+            <div class="grid-out">
+            {% for product in page_obj %}
+                <div class="card p-4 m-3 borderli itemsize">
+                    <div class="d-flex position-relative" style="justify-content: space-between;">
+                        <div>
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <h6 class="card-subtitle">価格：{{ product.price }}</h6>
+                            <p class="card-text">カテゴリ：{{ product.category }}</p>
+                        </div>
+                        <button class="starbtn position-absolute" onclick="toggleStar(this, {{ product.id }})">
+                            <!-- お気に入り状態に応じて星のアイコンを切り替える -->
+                            <i class="bi {% if product.id in favorite_products %}bi-star-fill{% else %}bi-star{% endif %} star"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <button class="btn borderli maincolor btny" style="margin:25px 0 0; width:100%;">
+                            <a style="color:black; text-decoration:none;" href="{% url 'search_app:product_detail' product.pk %}">詳細を見る</a>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                    <li>No results found</li>
+                {% endfor %}
+            <div>
+        </ul>
+
+            <div class="pagination" style="justify-content:center; margin:20px;">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a style="color:#E5BE01;" href="?page=1">最初</a> 
+                        <a style="color:#E5BE01;" href="?page={{ page_obj.previous_page_number }}">前へ</a>
+                    {% endif %}
+                    <span class="current">
+                        ページ {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a style="color:#E5BE01;" href="?page={{ page_obj.next_page_number }}">次へ</a>
+                        <a style="color:#E5BE01;" href="?page={{ page_obj.paginator.num_pages }}">最後</a>
+                    {% endif %}
+                </span>
+            </div>
+
+            <!-- ログアウト確認用のモーダル -->
+            <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true" style="align-content: center;">
+                <div class="modal-dialog" style="text-align: -webkit-center;">
+                    <div class="modal-content borderli" style="border-radius: 15px;">
+                        <div class="modal-body">
+                            <h5 class="modal-title" id="logoutModalLabel" style="text-align: center; margin: 0 0 10px;">ログアウト確認</h5>
+                            本当にログアウトしますか？
+                        </div>
+                        <div class="modal-footer " style="justify-content: space-around;">
+                            <form method="POST" action="{% url 'accounts:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" style="color:#D96767; font-weight:bold; border:none; background:none;">ログアウト</button>
+                            </form>
+                            <button type="button" class="btn" data-bs-dismiss="modal">キャンセル</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="subcolor" style="height:60px; color:white;">
+            フッター
+        </footer>
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        <!--<script>
+            function toggleStar(button) {
+                const icon = button.querySelector('i');
+                icon.classList.toggle('bi-star');
+                icon.classList.toggle('bi-star-fill');
+                icon.classList.toggle('active');  // アクティブ状態をトグル
+            }
+        </script>-->
+        <script>
+            function toggleStar(button, productId) {
+                const icon = button.querySelector('i');
+                const isFavorited = icon.classList.contains('bi-star-fill');
+        
+                // アイコンのクラスを切り替える
+                icon.classList.toggle('bi-star');
+                icon.classList.toggle('bi-star-fill');
+        
+                // お気に入り追加・削除リクエスト
+                fetch(`/favorites/toggle/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        // エラー時はアイコンの状態を元に戻す
+                        icon.classList.toggle('bi-star');
+                        icon.classList.toggle('bi-star-fill');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        </script>
+    </body>
+</html> <!--お気に入りボタンを配置 / お気に入り商品のフィルター・お気に入り商品表示-->

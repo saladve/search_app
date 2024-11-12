@@ -1,0 +1,91 @@
+body {
+    font-family:"Hiragino Sans", "ヒラギノ角ゴシック";
+    background-color: #f3f3f3;
+    color: #535353;
+}
+
+header {
+    height:80px; 
+    border-bottom: 2px solid #535353;
+    padding: 20px;
+}
+
+header h3, a {
+    color: #535353;
+}
+
+footer {
+    margin-top: 30px;
+}
+
+ul {
+    padding-left:0;
+}
+
+li {
+    list-style:none;
+}
+
+.maincolor {
+    background-color: #E5BE01;
+}
+
+.subcolor {
+    background-color:#535353; 
+}
+
+.borderli {
+    border: 2px solid #535353;
+}
+
+.linknone {
+    text-decoration: none;
+}
+
+.btny:hover {
+    background-color: #edca1b;
+    border: 2px solid #535353;
+}
+
+.starbtn {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: larger;
+    top: 0;
+    right: 0;
+}
+
+.bi-star {
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #535353;
+}
+
+.star.bi-star-fill {
+    color: #E5BE01;
+    -webkit-text-stroke-width: 2px;
+    -webkit-text-stroke-color: #535353;
+}
+
+.grid-out {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 3fr));
+}
+
+@media screen and (max-width:650px) {
+    .itemsize {
+        flex-basis: 80%;
+    }
+}
+
+@media screen and (min-width:650px) {
+    .itemsize {
+        flex-basis: 40%;
+    }
+}
+
+@media screen and (min-width:1000px) {
+    .itemsize {
+        flex-basis: 30%;
+    }
+}
