@@ -42,7 +42,7 @@ def product_delete(request, pk):
         return redirect('product_list')
     return render(request, 'product_confirm_delete.html', {'product': product})
 
-
+@login_required
 def product_list(request):
     products = Product.objects.all()
     return render(request, 'product_list.html', {'products': products})
@@ -86,9 +86,7 @@ def search_view(request):
     
 @login_required
 def product_list(request):
-    products = Product.objects.all()
-    favorites = Favorite.objects.filter(user=request.user)
-        
+    products = Product.objects.all()        
     favorite_products = Favorite.objects.filter(user=request.user).values_list('product_id', flat=True)
     context = {
         'products': products,
