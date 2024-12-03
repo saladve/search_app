@@ -14,18 +14,20 @@
     </head>
     <body style="background-color:#f3f3f3;">
         <header class="maincolor" style="">
-            <div style="float:right;">
-                {% if request.user.is_authenticated %} <!--ログアウト-->
-                <a type="button" class="text-danger linknone" data-bs-toggle="modal" data-bs-target="#logoutModal" style="cursor: pointer; margin-top: 20px;">
-                    ログアウト
-                </a>
+            <div class="position-relative">
+                {% if request.user.is_authenticated %}
+                <ul class="position-absolute" style="right:0;">
+                    <li>ユーザー：{{ user.username }}</li>
+                        <li><a type="button" class="text-danger linknone fw-bold" data-bs-toggle="modal" data-bs-target="#logoutModal" style="cursor: pointer; right:0;">ログアウト</a></li>
+                </ul>
                 {% else %}
-                <ul>
+                <ul class="position-absolute" style="right:0;">
                     <li><a href={% url 'accounts:signup' %} class="linknone">サインイン</a></li>
                     <li><a href={% url 'accounts:login' %} class="linknone">ログイン</a></li>
                 </ul>
                 {% endif %}
-            </div>
+            </div> 
+            <a class="position-absolute linknone" style="left:0;" href="{% url 'search_app:favorite_list' %}"><i style="font-size:25px; margin:20px;" class="bi bi-bookmark-star"></i></a>
             <a href={% url 'search_app:search' %} class="linknone">
                 <h3 style="text-align:center;">検索アプリ</h3>
             </a>
@@ -39,29 +41,92 @@
                         <div class="card p-3" style="border: 2px solid #535353;">
                             <div class="card-body">
                                 <a style="float:right;" href="{% url 'search_app:product_update' product.pk %}" class=""><i class="bi bi-pencil-square" style="color:black; font-size: 20px;"></i></a>
+                                <button class="starbtn" style="float:right;" onclick="toggleStar(this, {{ product.id }})">
+                                    <i class="bi {% if product.id in favorite_products %}bi-star-fill{% else %}bi-star{% endif %} star"></i>
+                                </button>
                                 <h2 class="card-title">{{ product.name }}</h2>
                                 <p class="card-text">{{ product.description }}</p>
                                 <p class="card-text"><strong>{{ product.price|floatformat:0|intcomma }}円</strong></p>
-                                <!-- ボタンの配置 -->
                                 <div class="d-flex mt-4 justify-content-evenly" style="">
-                                    
                                     <form style="width:45%;" action="{% url 'search_app:product_delete' product.pk %}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
                                     {% csrf_token %}
                                     <button style="width:100%;" type="submit" class="btn btn-danger borderli">削除</button>
                                     </form>
-                                    <a href="{% url 'search_app:search' %}" style="width:45%; background:#E5BE01; border: 2px solid #535353;" class="btn">商品一覧に戻る</a>
-
+                                    <a href="{% url 'search_app:search' %}" style="width:45%; background:#E5BE01; border: 2px solid #535353;" class="btn btny">商品一覧に戻る</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!--ランダムに約３商品を表示-->
+            <div style="margin:20px;">
+                <h3 class="mt-5" style="justify-self: center;">他の商品</h3>
+                <div class="recommended-items">
+                    {% for recommended_product in recommended_products %}
+                    <div class="card p-4 m-3 borderli itemsize">
+                        <div class="d-flex position-relative" style="justify-content: space-between;">
+                            <div style="line-height:2;">
+                                <h5 class="card-title">{{ recommended_product.name }}</h5>
+                                <h6 class="card-subtitle">価格：{{ recommended_product.price|floatformat:"0" }}</h6>
+                                <p class="card-text">カテゴリ：{{ recommended_product.category }}</p>
+                            </div>
+                            <button class="starbtn position-absolute" onclick="toggleStar(this, {{ recommended_product.id }})">
+                                <i class="bi {% if recommended_product.id in favorite_products %}bi-star-fill{% else %}bi-star{% endif %} star"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <a href="{% url 'search_app:product_detail' recommended_product.pk %}" class="btn borderli maincolor btny" style="margin:25px 0 0; width:100%; color:black; text-decoration:none;">
+                                詳細を見る
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <style>
+                .recommended-items {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 20px;
+                    margin: 0 auto;
+                    max-width: 1200px;
+                }
+            </style>
         </main>
-        <footer class="subcolor" style="height:60px; color:white;">
-            フッター
+        <footer class="subcolor" style="height:60px;">
+            バンタン二年次制作物
         </footer>
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            function toggleStar(button, productId) {
+                const icon = button.querySelector('i');
+                // サーバーにお気に入り状態を送信して更新
+                fetch(`/favorites/toggle/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_favorited) {// お気に入りに登録された場合、星を点灯
+                        icon.classList.add('bi-star-fill');
+                        icon.classList.remove('bi-star');
+                    } else {// お気に入りから解除された場合、星を消灯
+                        icon.classList.add('bi-star');
+                        icon.classList.remove('bi-star-fill');
+                    }
+                })
+                .catch(error => {
+                    console.error('エラー:', error);
+                    alert("お気に入りの登録/解除ができませんでした。再試行してください。");
+                });
+            }
+        </script>
     </body>
 </html>

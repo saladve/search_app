@@ -4,6 +4,12 @@ body {
     color: #535353;
 }
 
+footer {
+    text-align: center;
+    align-content: center;
+    color: #797979;
+}
+
 header {
     height:80px; 
     border-bottom: 2px solid #535353;
@@ -56,6 +62,14 @@ li {
     right: 0;
 }
 
+.starbtn2 {
+    background-color: white;
+    height: 50px;
+    width: 50px;
+    margin: auto;
+    border-radius: 25px;
+}
+
 .bi-star {
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #535353;
@@ -70,6 +84,10 @@ li {
 .grid-out {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 3fr));
+}
+
+.marno p {
+    margin: 0;
 }
 
 @media screen and (max-width:650px) {

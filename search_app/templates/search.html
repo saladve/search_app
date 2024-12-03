@@ -25,12 +25,20 @@
                     <li><a href={% url 'accounts:login' %} class="linknone">ログイン</a></li>
                 </ul>
                 {% endif %}
-            </div>                
-            <h3 style="text-align:center;">検索アプリ</h3>
+            </div> 
+            <a class="position-absolute linknone" style="left:0;" href="{% url 'search_app:favorite_list' %}"><i style="font-size:25px; margin:20px;" class="bi bi-bookmark-star"></i></a>
+            <a href={% url 'search_app:search' %} class="linknone">
+                <h3 style="text-align:center;">検索アプリ</h3>
+            </a>
         </header>
-        <main><!--検索フォーム-->
+        <main>
+            <!--検索フォーム-->
             <form method="get" class="borderli rounded" style="margin:50px 30px; padding:30px 30px 20px;">
-                <div style="text-align: center;">{{ form.as_p }}</div>
+                <div class="d-flex justify-content-center">
+                    <div class="w-100 marno" style="text-align: center;">
+                        {{ form.as_p }}
+                    </div>               
+                </div>                
                 <div class="d-flex mt-3" style="justify-content: space-around;">
                     <div style="width:45%;">
                         <label for="category">カテゴリ：</label>
@@ -51,9 +59,6 @@
                 </div>
 
                 <div class="d-flex mt-3" style="justify-content: space-around;">
-                    <!--minをデータの最低額・maxを最高額にして二点を選べるようにする
-                    <input type="range" class="form-range" min="0" max="" id="customRange2">-->
-
                     <div style="width:45%;">
                         <label for="min_price">最低価格：</label>
                         <input class="borderli rounded" style="width:100%;" type="number" name="min_price" min="0">
@@ -69,27 +74,28 @@
 
         <!--検索ワードの表示　例："Django"の検索結果-->
 
-        <p>お気に入りテスト: {{ favorite_products }}</p>
-
         <ul style="padding-left: 0px; margin:20px;">
             <div class="grid-out">
             {% for product in page_obj %}
                 <div class="card p-4 m-3 borderli itemsize">
                     <div class="d-flex position-relative" style="justify-content: space-between;">
-                        <div>
+                        <div style="line-height:2;">
                             <h5 class="card-title">{{ product.name }}</h5>
-                            <h6 class="card-subtitle">価格：{{ product.price }}</h6>
+                            <h6 class="card-subtitle">価格：{{ product.price|floatformat:"0" }}</h6>
                             <p class="card-text">カテゴリ：{{ product.category }}</p>
                         </div>
                         <button class="starbtn position-absolute" onclick="toggleStar(this, {{ product.id }})">
-                            <!-- お気に入り状態に応じて星のアイコンを切り替える -->
                             <i class="bi {% if product.id in favorite_products %}bi-star-fill{% else %}bi-star{% endif %} star"></i>
                         </button>
+                    <!--{% if product.id in favorite_products %}bi-star-fill{% else %}bi-star{% endif %}:
+                        Djangoのテンプレートタグを使って、product.idがfavorite_productsリスト（ユーザーのお気に入り商品IDのリスト）に含まれているかを確認します。
+                        bi-star-fill: product.idがfavorite_productsに含まれている場合は「塗りつぶしの星」を表示し、「お気に入りに登録されている」ことを示します。
+                        bi-star: product.idがfavorite_productsに含まれていない場合は「空の星」を表示し、「お気に入りに登録されていない」ことを示します。-->
                     </div>
                     <div>
-                        <button class="btn borderli maincolor btny" style="margin:25px 0 0; width:100%;">
-                            <a style="color:black; text-decoration:none;" href="{% url 'search_app:product_detail' product.pk %}">詳細を見る</a>
-                        </button>
+                        <a href="{% url 'search_app:product_detail' product.pk %}" class="btn borderli maincolor btny" style="margin:25px 0 0; width:100%; color:black; text-decoration:none;">
+                            詳細を見る
+                        </a>
                     </div>
                 </div>
                 {% empty %}
@@ -134,44 +140,57 @@
             </div>
         </main>
 
-        <footer class="subcolor" style="height:60px; color:white;">
-            フッター
+        <footer class="subcolor" style="height:60px;">
+            バンタン二年次制作物
         </footer>
         <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-        <!--<script>
-            function toggleStar(button) {
-                const icon = button.querySelector('i');
-                icon.classList.toggle('bi-star');
-                icon.classList.toggle('bi-star-fill');
-                icon.classList.toggle('active');  // アクティブ状態をトグル
-            }
-        </script>-->
         <script>
             function toggleStar(button, productId) {
                 const icon = button.querySelector('i');
-                const isFavorited = icon.classList.contains('bi-star-fill');
-        
-                // アイコンのクラスを切り替える
-                icon.classList.toggle('bi-star');
-                icon.classList.toggle('bi-star-fill');
-        
-                // お気に入り追加・削除リクエスト
+                // サーバーにお気に入り状態を送信して更新
                 fetch(`/favorites/toggle/${productId}/`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
                     },
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (!data.success) {
-                        // エラー時はアイコンの状態を元に戻す
-                        icon.classList.toggle('bi-star');
-                        icon.classList.toggle('bi-star-fill');
+                    if (data.is_favorited) {// お気に入りに登録された場合、星を点灯
+                        icon.classList.add('bi-star-fill');
+                        icon.classList.remove('bi-star');
+                    } else {// お気に入りから解除された場合、星を消灯
+                        icon.classList.add('bi-star');
+                        icon.classList.remove('bi-star-fill');
                     }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('エラー:', error);
+                    alert("お気に入りの登録/解除ができませんでした。再試行してください。");
+                });
+
+                let isFilterOn = false;
+                function toggleFavoriteFilter() {
+                    const starButton = document.querySelector('.starbtn2 i');
+                    
+                    if (isFilterOn) {
+                        // OFF状態：白色
+                        starbtn2.style.color = "white";
+                    } else {
+                        // ON状態：黄色
+                        starbtn2.style.color = "yellow";
+                    }
+                    // フィルター状態の反転
+                    isFilterOn = !isFilterOn;
+                    // フィルターの処理を呼び出し（実際のフィルタリング関数を使用する場合はここで呼び出します）
+                    filterFavorites();
+                }
+                function filterFavorites() {
+                    // 実際のフィルター処理をここに追加
+                    console.log("Filtering favorites:", isFilterOn ? "ON" : "OFF");
+                }
             }
         </script>
     </body>
